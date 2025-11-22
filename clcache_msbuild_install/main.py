@@ -4,7 +4,7 @@ import winshell
 from . import env_utils
 from . import locate_cl_exe
 
-CLCACHE_REPO = "https://github.com/9a4gl/clcache.git"
+CLCACHE_REPO = "https://github.com/Aussiemon/clcache.git"
 CLCACHE_BRANCH = "master"
 THIS_DIR = env_utils.fileDirNameAbsolute(__file__)
 CLCACHE_REPO_DIR = env_utils.dirNameAbsolute(THIS_DIR + "\\..\\clcache")
@@ -138,7 +138,7 @@ def makeInitialChecks():
     return True
 
 
-def selectCl():
+def selectCl(autoSelect = False):
     env_utils.showFunctionIntro("Select cl compiler:")
     clExesList = locate_cl_exe.findClExesList()
     helpStr = """Below is the list of the available cl.exe versions for your different installations
@@ -150,6 +150,8 @@ of Microsoft Visual Studio.
         - Version 12.0 corresponds to MSVC 2013
         - Version 14.0 corresponds to MSVC 2015
         - Versions 15.* correspond to MSVC 2017
+        - Versions 16.* correspond to MSVC 2019
+        - Versions 17.* correspond to MSVC 2022
     * targetArch is the arch you are targeting
     * hostArch is the arch of your installation of Visual Studio 
       (select x86 most of the times)
@@ -157,21 +159,25 @@ of Microsoft Visual Studio.
     """
     print(helpStr)
     locate_cl_exe.printClList(clExesList)
-    while True:
-        answer = input("Enter the number corresponding to the desired compiler: ")
-        try:
-            nb = int(answer)
-        except ValueError:
-            print("Enter a number between 1 and " + str(len(clExesList)))
-            continue
-        if nb >= 1 and nb <= len(clExesList):
-            clExe = clExesList[nb - 1].installDir + "\\cl.exe"
-            print("Selected : " + clExe)
-            env_utils.setAndStoreEnvVariable("CLCACHE_CL", clExe)
-            return True
-        else:
-            print("Enter a number between 1 and " + str(len(clExesList)))
-    return False
+    if not autoSelect:
+        while True:
+            answer = input("Enter the number corresponding to the desired compiler: ")
+            try:
+                nb = int(answer)
+            except ValueError:
+                print("Enter a number between 1 and " + str(len(clExesList)))
+                continue
+            if nb >= 1 and nb <= len(clExesList):
+                clExe = clExesList[nb - 1].installDir + "\\cl.exe"
+                print("Selected : " + clExe)
+                env_utils.setAndStoreEnvVariable("CLCACHE_CL", clExe)
+                return True
+            else:
+                print("Enter a number between 1 and " + str(len(clExesList)))
+    else:
+        clExe = clExesList[len(clExesList) - 1].installDir + "\\cl.exe"
+        print("Selected : " + clExe)
+        return True
 
 
 def fullClcacheSetup():
@@ -179,7 +185,7 @@ def fullClcacheSetup():
         return False
     if not installClcache():
         return False
-    if not selectCl():
+    if not selectCl(True):
         return False
     if not copyMsvcPrefClcache():
         return False
